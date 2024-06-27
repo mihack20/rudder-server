@@ -352,6 +352,11 @@ func (w *worker) batchTransform(routerJobs []types.RouterJobT) []types.Destinati
 	return destinationJobs
 }
 
+type ApiLog struct {
+	Request  json.RawMessage `json:"request"`
+	Response json.RawMessage `json:"response"`
+}
+
 func (w *worker) processDestinationJobs() {
 	// process limiter with dynamic priority
 	start := time.Now()
@@ -691,10 +696,21 @@ func (w *worker) processDestinationJobs() {
 
 	// NOTE: Sending live events to config backend after the status objects are built completely.
 	destLiveEventSentMap := make(map[*types.DestinationJobT]struct{})
+	
 	for _, routerJobResponse := range routerJobResponses {
+		apiLogs := make([]ApiLog, 0)
 		// Sending only one destination live event for every destinationJob
 		if _, ok := destLiveEventSentMap[routerJobResponse.destinationJob]; !ok {
-			payload := routerJobResponse.destinationJob.Message
+			// payload := routerJobResponse.destinationJob.Message
+			var respMap map[string]interface{}
+			_ = json.Unmarshal([]byte(routerJobResponse.respBody), &respMap)
+			respJson, _ := json.Marshal(respMap)
+			apiLogs = append(apiLogs, ApiLog{
+				Request:  routerJobResponse.destinationJob.Message,
+				Response: respJson,
+			})
+			apiLogsJson, _ := json.Marshal(apiLogs)
+			payload := apiLogsJson
 			if routerJobResponse.destinationJob.Message == nil {
 				payload = routerJobResponse.destinationJobMetadata.JobT.EventPayload
 			}
@@ -848,11 +864,12 @@ func (w *worker) prepareRouterJobResponses(destinationJob types.DestinationJobT,
 	// By default we get some config from dest def
 	// We can override via env saveDestinationResponseOverride
 
-	for k, respStatusCode := range respStatusCodes {
-		if isSuccessStatus(respStatusCode) && !getRouterConfigBool("saveDestinationResponseOverride", w.rt.destType, false) && !w.rt.saveDestinationResponse {
-			respBodys[k] = ""
-		}
-	}
+	// commented for now
+	// for k, respStatusCode := range respStatusCodes {
+	// 	if isSuccessStatus(respStatusCode) && !getRouterConfigBool("saveDestinationResponseOverride", w.rt.destType, false) && !w.rt.saveDestinationResponse {
+	// 		respBodys[k] = ""
+	// 	}
+	// }
 
 	routerJobResponses := make([]*JobResponse, 0)
 
