@@ -99,12 +99,14 @@ func (producer *LambdaProducer) Produce(destinationJob types.DestinationJobT, de
 
 	apiLogs := make([]types.ApiLog, 0)
 	req := make(map[string]interface{})
-	req["FunctionName"] = invokeInput.FunctionName
-	req["Payload"] = input.Payload
-	req["InvocationType"] = invokeInput.InvocationType
+	reqPayload := make(map[string]interface{})
+	reqPayload["FunctionName"] = invokeInput.FunctionName
+	reqPayload["Payload"] = input.Payload
+	reqPayload["InvocationType"] = invokeInput.InvocationType
 	if config.ClientContext != "" {
-		req["ClientContext"] = invokeInput.ClientContext
+		reqPayload["ClientContext"] = invokeInput.ClientContext
 	}
+	req["payload"] = reqPayload
 
 	res := make(map[string]interface{})
 
