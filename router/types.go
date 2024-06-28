@@ -83,6 +83,7 @@ func (j JobResponse) GetRouterAPiLogs() ([]types.ApiLog, error) {
 		finalReq["endpoint"] = reqParsed["endpoint"].(string)
 		finalReq["headers"] = reqParsed["headers"].(map[string]interface{})
 		finalReq["params"] = reqParsed["params"].(map[string]interface{})
+		finalReq["correlationIds"] = reqParsed["correlationIds"].([]interface{})
 		finalReqArr = append(finalReqArr, finalReq)
 	}
 	var respParsedArr []map[string]interface{} = make([]map[string]interface{}, 0)
