@@ -35,11 +35,12 @@ type PostParametersT struct {
 	URL           string `json:"endpoint"`
 	RequestMethod string `json:"method"`
 	// Invalid tag used in struct. skipcq: SCC-SA5008
-	UserID      string                 `json:"userId,,optional"` //nolint:staticcheck
-	Headers     map[string]interface{} `json:"headers"`
-	QueryParams map[string]interface{} `json:"params"`
-	Body        map[string]interface{} `json:"body"`
-	Files       map[string]interface{} `json:"files"`
+	UserID         string                 `json:"userId,,optional"` //nolint:staticcheck
+	Headers        map[string]interface{} `json:"headers"`
+	QueryParams    map[string]interface{} `json:"params"`
+	Body           map[string]interface{} `json:"body"`
+	Files          map[string]interface{} `json:"files"`
+	CorrelationIds []int                  `json:"correlationIds`
 }
 
 type TransStatsT struct {

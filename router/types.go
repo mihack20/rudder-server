@@ -61,7 +61,7 @@ func (j JobResponse) GetTransformerApiLogs() []types.ApiLog {
 	apiLogs := make([]types.ApiLog, 0)
 	for _, metadata := range j.destinationJob.JobMetadataArray {
 		for _, apiLog := range metadata.ApiLogs {
-			apiLog.JobId = metadata.JobID
+			apiLog.JobIds = []int{int(metadata.JobID)}
 			apiLogs = append(apiLogs, apiLog)
 		}
 	}
@@ -83,7 +83,7 @@ func (j JobResponse) GetRouterAPiLogs() ([]types.ApiLog, error) {
 		finalReq["endpoint"] = reqParsed["endpoint"].(string)
 		finalReq["headers"] = reqParsed["headers"].(map[string]interface{})
 		finalReq["params"] = reqParsed["params"].(map[string]interface{})
-		finalReq["correlationIds"] = reqParsed["correlationIds"].([]interface{})
+		finalReq["jobIds"] = reqParsed["correlationIds"].([]interface{})
 		finalReqArr = append(finalReqArr, finalReq)
 	}
 	var respParsedArr []map[string]interface{} = make([]map[string]interface{}, 0)

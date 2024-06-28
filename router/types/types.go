@@ -63,7 +63,7 @@ func (dj *DestinationJobT) JobIDs() map[int64]struct{} {
 type ApiLog struct {
 	Request  map[string]interface{} `json:"request"`
 	Response map[string]interface{} `json:"response"`
-	JobId    int64                 `json:"jobId"`
+	JobIds   []int                  `json:"jobIds"`
 }
 
 // JobMetadataT holds the job metadata
