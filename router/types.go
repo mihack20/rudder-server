@@ -66,25 +66,38 @@ func (j JobResponse) GetTransformerApiLogs() []types.ApiLog {
 func (j JobResponse) GetRouterAPiLogs() ([]types.ApiLog, error) {
 	apiLogs := make([]types.ApiLog, 0)
 	reqRaw := j.destinationJob.Message
-	var reqParsed []map[string]interface{}
-	if err := json.Unmarshal(reqRaw, &reqParsed); err != nil {
+	var reqParsedArr []map[string]interface{}
+	if err := json.Unmarshal(reqRaw, &reqParsedArr); err != nil {
 		return apiLogs, err
 	}
-	
+	var finalReqArr []map[string]interface{} = make([]map[string]interface{}, 0)
+	for _, reqParsed := range reqParsedArr {
+		var finalReq map[string]interface{} = make(map[string]interface{})
+		var requestBody map[string]interface{} = reqParsed["body"].(map[string]interface{})
+		finalReq["payload"] = requestBody["JSON"].(map[string]interface{})
+		finalReq["endpoint"] = reqParsed["endpoint"].(string)
+		finalReq["headers"] = reqParsed["headers"].(map[string]interface{})
+		finalReq["params"] = reqParsed["params"].(map[string]interface{})
+		finalReqArr = append(finalReqArr, finalReq)
+	}
 	var respParsedArr []map[string]interface{} = make([]map[string]interface{}, 0)
-	respArr := strings.Split(j.respBody, " ") 
+	respArr := strings.Split(j.respBody, " ")
 	for _, resp := range respArr {
 		var respParsed map[string]interface{}
 		err := json.Unmarshal([]byte(resp), &respParsed)
 		if err != nil {
 			return apiLogs, err
 		}
-		respParsedArr = append(respParsedArr, respParsed)
+		var respDetails map[string]interface{} = make(map[string]interface{})
+		respDetails["payload"] = respParsed
+		respDetails["status"] = j.respStatusCode
+
+		respParsedArr = append(respParsedArr, respDetails)
 	}
 
 	for i, _ := range respParsedArr {
 		apiLogs = append(apiLogs, types.ApiLog{
-			Request: reqParsed[i],
+			Request:  finalReqArr[i],
 			Response: respParsedArr[i],
 		})
 	}
