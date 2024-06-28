@@ -705,9 +705,9 @@ func (w *worker) processDestinationJobs() {
 			}
 			apiLogsJson, _ := json.Marshal(apiLogs)
 			payload := apiLogsJson
-			if routerJobResponse.destinationJob.Message == nil {
-				payload = routerJobResponse.destinationJobMetadata.JobT.EventPayload
-			}
+			// if routerJobResponse.destinationJob.Message == nil {
+			// 	payload = routerJobResponse.destinationJobMetadata.JobT.EventPayload
+			// }
 			sourcesIDs := make([]string, 0)
 			for _, metadata := range routerJobResponse.destinationJob.JobMetadataArray {
 				if !slices.Contains(sourcesIDs, metadata.SourceID) {

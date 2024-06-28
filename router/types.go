@@ -3,6 +3,8 @@ package router
 import (
 	"context"
 	"encoding/json"
+
+	// "strconv"
 	"strings"
 	"sync"
 	"time"
@@ -58,7 +60,10 @@ type JobResponse struct {
 func (j JobResponse) GetTransformerApiLogs() []types.ApiLog {
 	apiLogs := make([]types.ApiLog, 0)
 	for _, metadata := range j.destinationJob.JobMetadataArray {
-		apiLogs = append(apiLogs, metadata.ApiLogs...)
+		for _, apiLog := range metadata.ApiLogs {
+			apiLog.JobId = metadata.JobID
+			apiLogs = append(apiLogs, apiLog)
+		}
 	}
 	return apiLogs
 }
@@ -94,7 +99,6 @@ func (j JobResponse) GetRouterAPiLogs() ([]types.ApiLog, error) {
 
 		respParsedArr = append(respParsedArr, respDetails)
 	}
-
 	for i, _ := range respParsedArr {
 		apiLogs = append(apiLogs, types.ApiLog{
 			Request:  finalReqArr[i],

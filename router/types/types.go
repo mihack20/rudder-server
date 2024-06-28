@@ -63,6 +63,7 @@ func (dj *DestinationJobT) JobIDs() map[int64]struct{} {
 type ApiLog struct {
 	Request  map[string]interface{} `json:"request"`
 	Response map[string]interface{} `json:"response"`
+	JobId    int64                 `json:"jobId"`
 }
 
 // JobMetadataT holds the job metadata
@@ -84,7 +85,7 @@ type JobMetadataT struct {
 	DestInfo           json.RawMessage `json:"destInfo,omitempty"`
 	DontBatch          bool            `json:"dontBatch"`
 	TraceParent        string          `json:"traceparent"`
-	ApiLogs			   []ApiLog        `json:"apiLogs"`
+	ApiLogs            []ApiLog        `json:"apiLogs"`
 }
 
 // TransformMessageT is used to pass message to the transformer workers
