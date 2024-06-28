@@ -5,6 +5,7 @@ package personalize
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rudderlabs/rudder-server/router/types"
 
 	"github.com/aws/aws-sdk-go/service/personalizeevents"
 	"github.com/tidwall/gjson"
@@ -44,7 +45,8 @@ func NewProducer(destination *backendconfig.DestinationT, o common.Opts) (*Perso
 	return &PersonalizeProducer{client: personalizeevents.New(awsSession)}, nil
 }
 
-func (producer *PersonalizeProducer) Produce(jsonData json.RawMessage, _ interface{}) (statusCode int, respStatus, responseMessag string) {
+func (producer *PersonalizeProducer) Produce(destinationJob types.DestinationJobT, _ interface{}) (statusCode int, respStatus, responseMessag string) {
+	jsonData := destinationJob.Message
 	client := producer.client
 	if client == nil {
 		return 400, "Could not create producer for Personalize", "Could not create producer for Personalize"

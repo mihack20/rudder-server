@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/rudderlabs/rudder-server/router/types"
 	"io"
 	"os"
 	"strconv"
@@ -649,7 +650,8 @@ func (p *ProducerManager) Publish(ctx context.Context, msgs ...client.Message) e
 }
 
 // Produce creates a producer and send data to Kafka.
-func (p *ProducerManager) Produce(jsonData json.RawMessage, destConfig interface{}) (int, string, string) {
+func (p *ProducerManager) Produce(destinationJob types.DestinationJobT, destConfig interface{}) (int, string, string) {
+	jsonData := destinationJob.Message
 	if p.p == nil {
 		// return 400 if producer is invalid
 		return 400, "Could not create producer", "Could not create producer"

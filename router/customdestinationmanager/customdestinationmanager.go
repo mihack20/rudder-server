@@ -2,7 +2,6 @@ package customdestinationmanager
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -15,6 +14,7 @@ import (
 	"github.com/rudderlabs/rudder-go-kit/config"
 	"github.com/rudderlabs/rudder-go-kit/logger"
 	backendconfig "github.com/rudderlabs/rudder-server/backend-config"
+	"github.com/rudderlabs/rudder-server/router/types"
 	"github.com/rudderlabs/rudder-server/rruntime"
 	"github.com/rudderlabs/rudder-server/services/kvstoremanager"
 	"github.com/rudderlabs/rudder-server/services/streammanager"
@@ -38,7 +38,7 @@ var (
 
 // DestinationManager implements the method to send the events to custom destinations
 type DestinationManager interface {
-	SendData(jsonData json.RawMessage, destID string) (int, string)
+	SendData(destinationJob types.DestinationJobT, destID string) (int, string)
 	BackendConfigInitialized() <-chan struct{}
 }
 
@@ -122,14 +122,15 @@ func (customManager *CustomManagerT) newClient(destID string) error {
 	return err
 }
 
-func (customManager *CustomManagerT) send(jsonData json.RawMessage, client interface{}, config map[string]interface{}) (int, string) {
+func (customManager *CustomManagerT) send(destinationJob types.DestinationJobT, client interface{}, config map[string]interface{}) (int, string) {
 	var statusCode int
 	var respBody string
+	jsonData := destinationJob.Message
 	switch customManager.managerType {
 	case STREAM:
 		// If client is not properly initialized then it won't reach here
 		streamProducer, _ := client.(common.StreamProducer)
-		statusCode, _, respBody = streamProducer.Produce(jsonData, config)
+		statusCode, _, respBody = streamProducer.Produce(destinationJob, config)
 	case KV:
 		var err error
 		kvManager, _ := client.(kvstoremanager.KVStoreManager)
@@ -158,7 +159,7 @@ func (customManager *CustomManagerT) send(jsonData json.RawMessage, client inter
 }
 
 // SendData gets the producer from streamDestinationsMap and sends data
-func (customManager *CustomManagerT) SendData(jsonData json.RawMessage, destID string) (int, string) {
+func (customManager *CustomManagerT) SendData(destinationJob types.DestinationJobT, destID string) (int, string) {
 	if disableEgress {
 		return 200, `200: outgoing disabled`
 	}
@@ -189,7 +190,7 @@ func (customManager *CustomManagerT) SendData(jsonData json.RawMessage, destID s
 	}
 	clientLock.RUnlock()
 
-	respStatusCode, respBody := customManager.send(jsonData, customDestination.client, customDestination.config)
+	respStatusCode, respBody := customManager.send(destinationJob, customDestination.client, customDestination.config)
 
 	if respStatusCode == CLIENT_EXPIRED_CODE {
 		clientLock.Lock()
@@ -201,7 +202,7 @@ func (customManager *CustomManagerT) SendData(jsonData json.RawMessage, destID s
 		clientLock.RLock()
 		customDestination = customManager.client[destID]
 		clientLock.RUnlock()
-		respStatusCode, respBody = customManager.send(jsonData, customDestination.client, customDestination.config)
+		respStatusCode, respBody = customManager.send(destinationJob, customDestination.client, customDestination.config)
 	}
 
 	return respStatusCode, respBody

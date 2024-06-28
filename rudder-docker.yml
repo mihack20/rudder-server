@@ -13,8 +13,10 @@ services:
     depends_on:
       - db
       - metrics-exporter
-      - d-transformer
-    image: rudderlabs/rudder-server:latest # latest version that matches 0.*.*
+      # - d-transformer
+    # build:
+    #   context: .
+    image: rudderstack/rudder-server-enterprise:1.19.2  # latest version that matches 0.*.*
     entrypoint: sh -c '/wait-for db:5432 -- /rudder-server'
     ports:
       - "8080:8080"
@@ -24,30 +26,46 @@ services:
       - JOBS_DB_PORT=5432
       - JOBS_DB_DB_NAME=jobsdb
       - JOBS_DB_PASSWORD=password
-      - DEST_TRANSFORM_URL=http://d-transformer:9090
-      - CONFIG_BACKEND_URL=https://api.rudderstack.com
-      - WORKSPACE_TOKEN=<your_workspace_token> # Must be written without quotes e.g. WORKSPACE_TOKEN=20TokEO34NWitou2t3quO8teS7
+      - DEST_TRANSFORM_URL=http://host.docker.internal:9090
+      # - DEST_TRANSFORM_URL=http://d-transformer:9090
+      # - CONFIG_BACKEND_URL=https://api.rudderstack.com
+      - CONFIG_BACKEND_URL=https://api.dev.rudderlabs.com
+      # - CONFIG_BACKEND_URL=https://api.staging.rudderlabs.com
+      # - WORKSPACE_TOKEN=1jrM5RTCm93IWsFAhGYkAqoSHau #prod
+      # - WORKSPACE_TOKEN=2SAsvK69ZcLVorRAkTWbp10uQvW
+      # - WORKSPACE_TOKEN=2QapyDvTGwuv4fQpwdyz2rNDZ9L  # prod enterprise
+      # - WORKSPACE_TOKEN=2UNTVULU8GNP46AdURw1SXDGyCo  # exinity enterprise
+      # - WORKSPACE_TOKEN=1pKWrAZzB8waITHtxYOHXANd2A0
+      # - WORKSPACE_TOKEN=2Csl0nMxjZLXQ235AndGt3vj6Of # dev enterprise 2ca7gAVIuUI6kBGWHNZMo2tXdPZ
+      # - WORKSPACE_TOKEN=2ca7gAVIuUI6kBGWHNZMo2tXdPZ # dev personal
+      - WORKSPACE_TOKEN=2ca7gAVIuUI6kBGWHNZMo2tXdPZ
+      # - WORKSPACE_TOKEN=2VZO7jcJxvit0v1rjhFFdrdRzvy # dev vikas
+      # - WORKSPACE_TOKEN=2K9SLVvUqxVBUOP3MB0Pkk6jUqj #mitel Must be written without quotes e.g. WORKSPACE_TOKEN=20TokEO34NWitou2t3quO8teS7
       - STATSD_SERVER_URL=metrics-exporter:9125
       # DO NOT REMOVE - Mandatory env for Shopify
-      - RSERVER_GATEWAY_WEBHOOK_SOURCE_LIST_FOR_PARSING_PARAMS=Shopify 
+      - RSERVER_GATEWAY_WEBHOOK_SOURCE_LIST_FOR_PARSING_PARAMS=Shopify
+      # - RSERVER_PROCESSOR_ADOBE_ANALYTICS_TRANSFORM_AT="router"
+      - RSERVER_ROUTER_ADOBE_ANALYTICS_TRANSFORMER_PROXY=true
       # - RSERVER_BACKEND_CONFIG_CONFIG_FROM_FILE=true
       # - RSERVER_BACKEND_CONFIG_CONFIG_JSONPATH=<workspace_config_filepath_in_container> # For ex., /etc/rudderstack/workspaceConfig.json
     # Uncomment the following lines to mount workspaceConfig file
     # volumes:
     #   - <absolute_path_to_workspace_config>:<workspace_config_filepath_in_container> # Value for <workspace_config_filepath_in_container> should be same as the value provided for RSERVER_BACKEND_CONFIG_CONFIG_JSONPATH
-  d-transformer:
-    depends_on:
-      - metrics-exporter
-    image: rudderstack/rudder-transformer:latest
+    # d-transformer:
+    #   depends_on:
+    #     - metrics-exporter
+    #   image: rudderstack/rudder-transformer:1.47.0
+    #   ports:
+    #     - "9090:9090"
+    #   environment:
+    #     - STATSD_SERVER_HOST=metrics-exporter
+    #     - STATSD_SERVER_PORT="9125"
+    #   # build:
+    #   context: ../rudder-transformer
+  minio:
+    image: minio/minio
     ports:
-      - "9090:9090"
-    environment:
-      - STATSD_SERVER_HOST=metrics-exporter
-      - STATSD_SERVER_PORT="9125"
-  # minio:
-  #   image: minio/minio
-  #   ports:
-  #     - "9000:9000"
+      - "9000:9000"
   #   command: server /data
   metrics-exporter:
     image: prom/statsd-exporter:v0.22.4

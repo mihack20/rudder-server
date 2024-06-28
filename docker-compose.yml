@@ -2,51 +2,45 @@ version: "3.7"
 
 services:
   db:
-    image: postgres:15-alpine
-    env_file:
-      - build/docker.env
+    image: postgres:11-alpine
+    environment:
+      - POSTGRES_USER=rudder
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=jobsdb
     ports:
       - "6432:5432"
   backend:
+    depends_on:
+      - db
+      #- d-transformer
+    # image: rudderstack/rudder-server-enterprise:0.2.1
+    # image: rudderlabs/rudder-server:1.3.3
+    # image: rudderstack/rudder-server-enterprise:1.21.1
     build:
       context: ./
       dockerfile: Dockerfile
-    depends_on:
-      - db
-      - transformer
-    entrypoint: sh -c '/wait-for db:5432 -- ./rudder-server'
+    entrypoint: sh -c '/wait-for db:5432 -- /rudder-server --cleardb=true'
     ports:
-      - "8080:8080"
-    env_file:
-      - build/docker.env
+      - "8082:8080"
     environment:
       - JOBS_DB_HOST=db
-  #   Uncomment the following lines to mount workspaceConfig file
-  #   volumes:
-  #     - <absolute_path_to_workspace_config>:/etc/rudderstack/workspaceConfig.json
-  transformer:
-    image: "rudderstack/rudder-transformer:latest"
-    ports:
-      - "9090:9090"
-  minio:
-    image: minio/minio
-    profiles:
-      - storage
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      - MINIO_ROOT_USER=root
-      - MINIO_ROOT_PASSWORD=password
-    command: server --console-address :9001 /data
-  etcd:
-    image: docker.io/bitnami/etcd:3
-    profiles:
-      - multi-tenant
-    environment:
-      - ALLOW_NONE_AUTHENTICATION=yes
-      - ETCD_NAME=etcd
-      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
-      - ETCD_ADVERTISE_CLIENT_URLS=http://mode-provider:2379
-    ports:
-      - "2379:2379"
+      - JOBS_DB_USER=rudder
+      - JOBS_DB_PORT=5432
+      - JOBS_DB_DB_NAME=jobsdb
+      - JOBS_DB_PASSWORD=password
+      - DEST_TRANSFORM_URL=http://192.168.0.103:9090
+      #- DEST_TRANSFORM_URL=http://d-transformer:9090
+      - CONFIG_BACKEND_URL=https://api.rudderlabs.com
+      #- WORKSPACE_TOKEN=275jSmuP49MAJzE1eF46mEePaGK
+      - RSERVER_ROUTER_TRANSFORMER_PROXY=true
+      - WORKSPACE_TOKEN=2AF7vFNABfydtxvWQ9zYvlqMqx4
+      # - RSERVER_SQLMIGRATOR_FORCE_SET_LOWER_VERSION=true
+      # - RSERVER_BACKEND_CONFIG_CONFIG_FROM_FILE=true
+      # - RSERVER_BACKEND_CONFIG_CONFIG_JSONPATH=<workspace_config_filepath_in_container> # For ex., /etc/rudderstack/workspaceConfig.json
+    # Uncomment the following lines to mount workspaceConfig file
+    # volumes:
+    #   - <absolute_path_to_workspace_config>:<workspace_config_filepath_in_container> # Value for <workspace_config_filepath_in_container> should be same as the value provided for RSERVER_BACKEND_CONFIG_CONFIG_JSONPATH
+#  d-transformer:
+#    image: rudderstack/develop-rudder-transformer:latest
+#    ports:
+#      - "9090:9090"

@@ -3,7 +3,7 @@
 package lambda
 
 import (
-	"encoding/json"
+	"github.com/rudderlabs/rudder-server/router/types"
 
 	"github.com/aws/aws-sdk-go/service/lambda"
 	jsoniter "github.com/json-iterator/go"
@@ -58,7 +58,9 @@ func NewProducer(destination *backendconfig.DestinationT, o common.Opts) (*Lambd
 }
 
 // Produce creates a producer and send data to Lambda.
-func (producer *LambdaProducer) Produce(jsonData json.RawMessage, destConfig interface{}) (int, string, string) {
+func (producer *LambdaProducer) Produce(destinationJob types.DestinationJobT, destConfig interface{}) (int, string, string) {
+	jsonData := destinationJob.Message
+
 	client := producer.client
 	if client == nil {
 		return 400, "Failure", "[Lambda] error :: Could not create client"
@@ -95,12 +97,40 @@ func (producer *LambdaProducer) Produce(jsonData json.RawMessage, destConfig int
 		return 400, "Failure", "[Lambda] error :: Invalid invokeInput :: " + err.Error()
 	}
 
+	apiLogs := make([]types.ApiLog, 0)
+	req := make(map[string]interface{})
+	req["FunctionName"] = invokeInput.FunctionName
+	req["Payload"] = input.Payload
+	req["InvocationType"] = invokeInput.InvocationType
+	if config.ClientContext != "" {
+		req["ClientContext"] = invokeInput.ClientContext
+	}
+
+	res := make(map[string]interface{})
+
 	_, err = client.Invoke(&invokeInput)
 	if err != nil {
 		statusCode, respStatus, responseMessage := common.ParseAWSError(err)
 		pkgLogger.Errorf("[Lambda] Invocation error :: %d : %s : %s", statusCode, respStatus, responseMessage)
+		res["status"] = statusCode
+		res["respStatus"] = respStatus
+		res["responseMessage"] = responseMessage
+		apiLogs = append(apiLogs, types.ApiLog{
+			Request:  req,
+			Response: res,
+		})
+		destinationJob.JobMetadataArray[0].ApiLogs = apiLogs
 		return statusCode, respStatus, responseMessage
 	}
+
+	res["status"] = 200
+	res["respStatus"] = "Success"
+	res["responseMessage"] = "Event delivered to Lambda :: " + config.Lambda
+	apiLogs = append(apiLogs, types.ApiLog{
+		Request:  req,
+		Response: res,
+	})
+	destinationJob.JobMetadataArray[0].ApiLogs = apiLogs
 
 	return 200, "Success", "Event delivered to Lambda :: " + config.Lambda
 }

@@ -5,6 +5,7 @@ package firehose
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rudderlabs/rudder-server/router/types"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/firehose"
@@ -45,7 +46,8 @@ func NewProducer(destination *backendconfig.DestinationT, o common.Opts) (*FireH
 }
 
 // Produce creates a producer and send data to Firehose.
-func (producer *FireHoseProducer) Produce(jsonData json.RawMessage, _ interface{}) (int, string, string) {
+func (producer *FireHoseProducer) Produce(destinationJob types.DestinationJobT, _ interface{}) (int, string, string) {
+	jsonData := destinationJob.Message
 	parsedJSON := gjson.ParseBytes(jsonData)
 	client := producer.client
 	if client == nil {

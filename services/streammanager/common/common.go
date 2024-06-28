@@ -3,7 +3,7 @@
 package common
 
 import (
-	"encoding/json"
+	"github.com/rudderlabs/rudder-server/router/types"
 	"io"
 	"strings"
 	"time"
@@ -13,7 +13,7 @@ import (
 
 type StreamProducer interface {
 	io.Closer
-	Produce(jsonData json.RawMessage, destConfig interface{}) (int, string, string)
+	Produce(destinationJob types.DestinationJobT, destConfig interface{}) (int, string, string)
 }
 
 type Opts struct {
