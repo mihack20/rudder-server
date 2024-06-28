@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"sync"
 	"time"
 
@@ -52,6 +53,53 @@ type JobResponse struct {
 	respBody               string
 	errorAt                string
 	status                 *jobsdb.JobStatusT
+}
+
+func (j JobResponse) GetTransformerApiLogs() []types.ApiLog {
+	apiLogs := make([]types.ApiLog, 0)
+	for _, metadata := range j.destinationJob.JobMetadataArray {
+		apiLogs = append(apiLogs, metadata.ApiLogs...)
+	}
+	return apiLogs
+}
+
+func (j JobResponse) GetRouterAPiLogs() ([]types.ApiLog, error) {
+	apiLogs := make([]types.ApiLog, 0)
+	reqRaw := j.destinationJob.Message
+	var reqParsed []map[string]interface{}
+	if err := json.Unmarshal(reqRaw, &reqParsed); err != nil {
+		return apiLogs, err
+	}
+	
+	var respParsedArr []map[string]interface{} = make([]map[string]interface{}, 0)
+	respArr := strings.Split(j.respBody, " ") 
+	for _, resp := range respArr {
+		var respParsed map[string]interface{}
+		err := json.Unmarshal([]byte(resp), &respParsed)
+		if err != nil {
+			return apiLogs, err
+		}
+		respParsedArr = append(respParsedArr, respParsed)
+	}
+
+	for i, _ := range respParsedArr {
+		apiLogs = append(apiLogs, types.ApiLog{
+			Request: reqParsed[i],
+			Response: respParsedArr[i],
+		})
+	}
+	return apiLogs, nil
+}
+
+func (j JobResponse) GetAllApiLogs() ([]types.ApiLog, error) {
+	apiLogs := make([]types.ApiLog, 0)
+	apiLogs = append(apiLogs, j.GetTransformerApiLogs()...)
+	routerApiLogs, err := j.GetRouterAPiLogs()
+	if err != nil {
+		return apiLogs, err
+	}
+	apiLogs = append(apiLogs, routerApiLogs...)
+	return apiLogs, nil
 }
 
 type reloadableConfig struct {

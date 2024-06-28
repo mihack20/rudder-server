@@ -693,27 +693,15 @@ func (w *worker) processDestinationJobs() {
 	destLiveEventSentMap := make(map[*types.DestinationJobT]struct{})
 
 	for _, routerJobResponse := range routerJobResponses {
-		apiLogs := make([]types.ApiLog, 0)
 		// Sending only one destination live event for every destinationJob
 		if _, ok := destLiveEventSentMap[routerJobResponse.destinationJob]; !ok {
 			// payload := routerJobResponse.destinationJob.Message
-			apiLogs := append(apiLogs, routerJobResponse.destinationJob.JobMetadataArray[0].ApiLogs...)
-
-			var req []map[string]interface{}
-			reqErr := json.Unmarshal(routerJobResponse.destinationJob.Message, &req)
-			if reqErr != nil {
-				fmt.Printf("[Inpector] err %v", reqErr)
+			apiLogs, err := routerJobResponse.GetAllApiLogs()
+			if err != nil {
+				fmt.Printf("Error getting api logs, %v", err)
+			} else {
+				fmt.Println(apiLogs)
 			}
-			var respMap map[string]interface{}
-
-			_ = json.Unmarshal([]byte(routerJobResponse.respBody), &respMap)
-
-			apiLogs = append(apiLogs, types.ApiLog{
-				// TODO; change this to handle array
-				Request:  req[0],
-				Response: respMap,
-			})
-			fmt.Println(apiLogs)
 			apiLogsJson, _ := json.Marshal(apiLogs)
 			payload := apiLogsJson
 			if routerJobResponse.destinationJob.Message == nil {
