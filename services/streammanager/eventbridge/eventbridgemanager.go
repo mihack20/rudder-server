@@ -5,6 +5,7 @@ package eventbridge
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rudderlabs/rudder-server/router/types"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/eventbridge"
@@ -44,7 +45,8 @@ func NewProducer(destination *backendconfig.DestinationT, o common.Opts) (*Event
 }
 
 // Produce creates a producer and send data to EventBridge.
-func (producer *EventBridgeProducer) Produce(jsonData json.RawMessage, _ interface{}) (int, string, string) {
+func (producer *EventBridgeProducer) Produce(destinationJob types.DestinationJobT, _ interface{}) (int, string, string) {
+	jsonData := destinationJob.Message
 	// get producer
 	client := producer.client
 	if client == nil {

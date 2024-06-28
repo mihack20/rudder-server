@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/rudderlabs/rudder-server/router/types"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -108,7 +109,8 @@ func NewProducer(destination *backendconfig.DestinationT, o common.Opts) (*Googl
 	return &GoogleSheetsProducer{client}, err
 }
 
-func (producer *GoogleSheetsProducer) Produce(jsonData json.RawMessage, _ interface{}) (statusCode int, respStatus, responseMessage string) {
+func (producer *GoogleSheetsProducer) Produce(destinationJob types.DestinationJobT, _ interface{}) (statusCode int, respStatus, responseMessage string) {
+	jsonData := destinationJob.Message
 	client := producer.client
 	if client == nil {
 		respStatus = "Failure"

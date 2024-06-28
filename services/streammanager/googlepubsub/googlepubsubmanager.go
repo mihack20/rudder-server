@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/rudderlabs/rudder-server/router/types"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/tidwall/gjson"
@@ -89,7 +90,8 @@ func NewProducer(destination *backendconfig.DestinationT, o common.Opts) (*Googl
 	return &GooglePubSubProducer{client: &PubsubClient{client, topicMap, o}}, nil
 }
 
-func (producer *GooglePubSubProducer) Produce(jsonData json.RawMessage, _ interface{}) (statusCode int, respStatus, responseMessage string) {
+func (producer *GooglePubSubProducer) Produce(destinationJob types.DestinationJobT, _ interface{}) (statusCode int, respStatus, responseMessage string) {
+	jsonData := destinationJob.Message
 	parsedJSON := gjson.ParseBytes(jsonData)
 	pbs := producer.client
 	if pbs == nil {

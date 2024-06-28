@@ -477,7 +477,7 @@ func (w *worker) processDestinationJobs() {
 							panic(fmt.Errorf("different destinations are grouped together"))
 						}
 					}
-					respStatusCode, respBody := w.rt.customDestinationManager.SendData(destinationJob.Message, destinationID)
+					respStatusCode, respBody := w.rt.customDestinationManager.SendData(destinationJob, destinationID)
 					respStatusCodes, respBodys = w.prepareResponsesForJobs(&destinationJob, respStatusCode, respBody)
 					errorAt = routerutils.ERROR_AT_CUST
 				} else {
@@ -529,6 +529,7 @@ func (w *worker) processDestinationJobs() {
 									sendCtx, cancel := context.WithTimeout(ctx, w.rt.netClientTimeout)
 									rdlTime := time.Now()
 									resp := w.rt.netHandle.SendPost(sendCtx, val)
+
 									cancel()
 									respStatusCode, respBodyTemp, respContentType = resp.StatusCode, string(resp.ResponseBody), resp.ResponseContentType
 									w.routerDeliveryLatencyStat.SendTiming(time.Since(rdlTime))

@@ -5,6 +5,7 @@ package kinesis
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rudderlabs/rudder-server/router/types"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/kinesis"
@@ -51,7 +52,8 @@ func NewProducer(destination *backendconfig.DestinationT, o common.Opts) (*Kines
 }
 
 // Produce creates a producer and send data to Kinesis.
-func (producer *KinesisProducer) Produce(jsonData json.RawMessage, destConfig interface{}) (int, string, string) {
+func (producer *KinesisProducer) Produce(destinationJob types.DestinationJobT, destConfig interface{}) (int, string, string) {
+	jsonData := destinationJob.Message
 	client := producer.client
 	if client == nil {
 		return 400, "Could not create producer for Kinesis", "Could not create producer for Kinesis"

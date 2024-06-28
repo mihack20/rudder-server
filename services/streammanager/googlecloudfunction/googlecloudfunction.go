@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/rudderlabs/rudder-server/router/types"
 	"io"
 	"net/http"
 	"os"
@@ -113,7 +114,8 @@ func NewProducer(destination *backendconfig.DestinationT, _ common.Opts) (*Googl
 	}, err
 }
 
-func (producer *GoogleCloudFunctionProducer) Produce(jsonData json.RawMessage, _ interface{}) (statusCode int, respStatus, responseMessage string) {
+func (producer *GoogleCloudFunctionProducer) Produce(destinationJob types.DestinationJobT, _ interface{}) (statusCode int, respStatus, responseMessage string) {
+	jsonData := destinationJob.Message
 	// Create a POST request
 	req, err := http.NewRequest(http.MethodPost, producer.config.FunctionUrl, bytes.NewReader(jsonData))
 	if err != nil {
